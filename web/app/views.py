@@ -97,6 +97,22 @@ def comment_delete(request, board_pk, comment_pk):
         comment.delete()
     return redirect('show', pk=board_pk)
 
+def board_search(request):
+    query = request.GET.get('query')
+    search_type = request.GET.get('search_type')
+    boards = Board.objects.all()
+
+    if search_type == 'partial':
+        boards = boards.filter(title__icontains=query)
+    elif search_type == 'prefix':
+        boards = boards.filter(title__startswith=query)
+    elif search_type == 'suffix':
+        boards = boards.filter(title__endswith=query)
+    else:
+        boards = boards.filter(title__icontains=query)
+    return render(request, 'index.html', {'boards': boards})
+
+
 # ログインページのビュー
 class CustomLoginView(LoginView):
     template_name = 'registration/login.html'
