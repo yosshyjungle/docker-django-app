@@ -113,6 +113,32 @@ def board_search(request):
     return render(request, 'index.html', {'boards': boards})
 
 
+def board_sort(request):
+    sort_by = request.GET.get('sort')
+    direction = request.GET.get('direction')
+
+    if direction == 'asc':
+        next_direction = 'desc'
+    else:
+        next_direction = 'asc'
+    
+    if sort_by:
+        if direction == 'desc':
+            boards = Board.objects.order_by(f'-{sort_by}')
+        else:
+            boards = Board.objects.order_by(sort_by)
+    else:
+        boards = Board.objects.all()
+
+    context = {
+        'boards': boards,
+        'sort_by': sort_by,
+        'direction': direction,
+        'next_direction': next_direction,
+    }
+    return render(request, 'index.html', context)
+
+
 # ログインページのビュー
 class CustomLoginView(LoginView):
     template_name = 'registration/login.html'
