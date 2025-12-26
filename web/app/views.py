@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .forms import BoardForm, SignUpForm
-from .models import Board
+from .forms import BoardForm, SignUpForm, CommentForm
+from .models import Board, Comment
 from django.contrib.auth.views import LoginView
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
@@ -41,7 +41,9 @@ def create(request):
 @login_required
 def show(request, pk):
     board = Board.objects.get(pk=pk)
-    return render(request, 'show.html', {'board': board})
+    comments = Comment.objects.filter(board=pk).order_by('-created_at')
+    comment_form = CommentForm()
+    return render(request, 'show.html', {'board': board, 'comments': comments, 'comment_form': comment_form})
 
 @login_required
 @user_owns_board
@@ -78,6 +80,22 @@ def my_boards(request):
     boards = user.boards.all()
     return render(request, 'my_boards.html', {'boards': boards})
 
+@login_required
+def comment_create(request, pk):
+    if request.method == 'POST':
+        comment_form = CommentForm(request.POST)
+        if comment_form.is_valid():
+            comment_form.instance.user = request.user
+            comment_form.instance.board_id = pk
+            comment_form.save()
+    return redirect('show', pk=pk)
+
+@login_required
+def comment_delete(request, board_pk, comment_pk):
+    comment = get_object_or_404(Comment, pk=comment_pk)
+    if request.user == comment.user:
+        comment.delete()
+    return redirect('show', pk=board_pk)
 
 # ログインページのビュー
 class CustomLoginView(LoginView):
